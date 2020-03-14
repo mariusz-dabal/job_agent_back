@@ -17,6 +17,8 @@ class CreateUsersTable extends Migration
             $table->bigIncrements('id');
             $table->string('name');
             $table->string('email');
+            $table->string('password');
+            $table->timestamp('last_logged_in')->nullable();
             $table->timestamps();
         });
     }
