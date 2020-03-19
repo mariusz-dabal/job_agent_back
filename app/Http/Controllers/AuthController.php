@@ -2,39 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Auth;
 use App\User;
 use Validator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+// use Illuminate\Contracts\Auth\Factory as Auth;
 
 class AuthController extends Controller
 {
     public function register(Request $request){
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required'
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
         ]);
 
         if($validator->fails()){
             return response(['message' => 'Validation errors', 'errors' =>  $validator->errors(), 'status' => false], 422);
         }
 
-        $input = $request->all();
-        $input['password'] = Hash::make($input['password']);
-        $user = User::create($input);
-      
-        /**Take note of this: Your user authentication access token is generated here **/
-        $data['token'] =  $user->createToken('MyApp')->accessToken;
-        $data['name'] =  $user->name;
-
-        return response(['data' => $data, 'message' => 'Account created successfully!', 'status' => true]);
+        return User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
     }
     
     public function login(Request $request) {
         $http = new \GuzzleHttp\Client;
-        // return config('auth.passport.login_endpoint');
         try {
             $response = $http->post(config('auth.passport.login_endpoint'), [
                 'form_params' => [
@@ -55,5 +52,13 @@ class AuthController extends Controller
 
             return response()->json('Something went wrong on the server.', $e->getCode());
         }
+    }
+
+    public function logout() {
+        Auth::user()->tokens->each(function ($token, $key) {
+            $token->delete();
+        });
+
+        return response()->json('Logged out successfully', 200);
     }
 }
