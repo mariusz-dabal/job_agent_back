@@ -11,15 +11,18 @@
 |
 */
 
+$router->get('/', function () use ($router) {
+    return $router->app->version();
+});
+
 // register/login
 $router->post('/register', 'AuthController@register');
 $router->post('/login', 'AuthController@login');
 $router->post('/logout', [
     'middleware' => 'auth',
     'uses' => 'AuthController@logout']);
-
-$router->get('/', function () use ($router) {
-    return $router->app->version();
-});
-
-$router->get('users', 'UserController@index');
+    
+// users
+$router->get('users', [
+    'middleware' => 'auth',
+    'uses' => 'UserController@index']);
